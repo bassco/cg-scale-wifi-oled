@@ -40,15 +40,15 @@
  */
 #define SCALE_GATHER_FREQ 10
 
-/* LoadCell GPIO */
-#define D_LC_FRONT_DOUT	21
-#define D_LC_FRONT_SCK	22
-#define D_LC_REAR_DOUT	19
-#define D_LC_REAR_SCK	  23
+/* LoadCell GPIO for T96 V1.1 OLED LilyGo*/
+#define D_LC_FRONT_DOUT	18  // 21
+#define D_LC_FRONT_SCK	 5  // 22
+#define D_LC_REAR_DOUT	19  // 19
+#define D_LC_REAR_SCK   23  // 23
 #define LC_STABILISING_TIME  4000
 
 /* Wifi SSID */
-#define WIFI_SSID       "CG-B"
+#define WIFI_SSID       "CG-BAL"
 
 /* Welcome plane (FPS->seconds) */
 #define WELCOME_PLANE   90
@@ -205,10 +205,10 @@ const char *_msg[] = {
 #define MSG_CONFIG_STEP1    11
   "1) You need to connect to:"
     "\n SSID: " WIFI_SSID
-    "\n http://172.16.19.1/",
+    "\n http://10.1.0.1/",
   "1) Connectez-vous au:"
     "\n Wifi: " WIFI_SSID
-    "\n http://172.16.19.1/",
+    "\n http://10.1.0.1/",
 #define MSG_CONFIG_STEP2    12
   "2) setup the loading cells",
   "2) config les cellules",
@@ -357,8 +357,8 @@ loadcell_gather( void )
  * Wifi
  */
 WiFiServer server(80);
-IPAddress local_IP(172,16,9,1);
-IPAddress gateway(172,16,9,1);
+IPAddress local_IP(10.1,0,1);
+IPAddress gateway(10,1,0,254);
 IPAddress subnet(255,255,255,0);
 
   void
@@ -376,7 +376,7 @@ setup_wifi( void )
 /*
  * UI
  */
-SSD1306  display(0x3c, 4, 15);
+SSD1306  display(0x3c, 21, 22);
 OLEDDisplayUi ui     ( &display );
 
 /* Loading last checks */

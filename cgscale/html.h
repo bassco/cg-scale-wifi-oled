@@ -3,7 +3,7 @@ const char HTML[] PROGMEM = R"=====(
 <!doctype html>
 <html>
   <head>
-    <title>CG balancer</title>
+    <title>CG Balancer</title>
 
     <style>
 /* W3PRO.CSS 4.12 November 2018 by Jan Egil and Borge Refsnes */
