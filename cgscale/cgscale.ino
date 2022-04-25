@@ -1,14 +1,14 @@
 // vim: set ft=c:
 /*
- * CG Scale
- * Author: Guillaume F.
- * https://github.com/guillaumef/cg-scale-wifi-oled
- *
- * CG Scale w/ Oled w/ Wifi
- *
- * You can tune the SSID, IP, GPIO, ...
- *
- */
+   CG Scale
+   Author: Guillaume F.
+   https://github.com/guillaumef/cg-scale-wifi-oled
+
+   CG Scale w/ Oled w/ Wifi
+
+   You can tune the SSID, IP, GPIO, ...
+
+*/
 
 #include <Wire.h>
 
@@ -27,51 +27,51 @@
 #include "html.h"
 
 /* Uncomment to enable console */
-// #define SERIAL_DEBUG
+#define SERIAL_DEBUG
 
 /*
- * Delay loading steps - time to see - set to 0 for fast
- * loading
- */
+   Delay loading steps - time to see - set to 0 for fast
+   loading
+*/
 #define DELAY_STEPS     50
 
 /*
- * Refresh every 1/10th of FPS
- */
+   Refresh every 1/10th of FPS
+*/
 #define SCALE_GATHER_FREQ 10
 
-/* LoadCell GPIO */
-#define D_LC_FRONT_DOUT	21
-#define D_LC_FRONT_SCK	22
-#define D_LC_REAR_DOUT	19
-#define D_LC_REAR_SCK	  23
+/* LoadCell GPIO for T96 V1.1 OLED LilyGo*/
+#define D_LC_FRONT_DOUT	18  // 21
+#define D_LC_FRONT_SCK	 5  // 22
+#define D_LC_REAR_DOUT	19  // 19
+#define D_LC_REAR_SCK   23 // 23
 #define LC_STABILISING_TIME  4000
 
 /* Wifi SSID */
-#define WIFI_SSID       "CG-B"
+#define WIFI_SSID       "CG-BAL"
 
 /* Welcome plane (FPS->seconds) */
 #define WELCOME_PLANE   90
 
 /* Do not display negative values */
-#define NO_NEGATIVE
+//#define NO_NEGATIVE
 /* Max weight tolerate */
 #define WEIGHT_MAX      9999.99
 /* Min weight on each cell to compute CG */
 #define WEIGHT_MIN_CG   30.0
 
 /*
- * Console
- */
+   Console
+*/
 #ifdef SERIAL_DEBUG
-  void
+void
 c_init()
 {
   Serial.begin(115200);
   Serial.println();
   Serial.println();
 }
-  void
+void
 c_print( String s )
 {
   Serial.println( s );
@@ -83,10 +83,10 @@ c_print( String s )
 
 
 /*
- *
- * Conf w/r
- *
- */
+
+   Conf w/r
+
+*/
 #define CONF_MAGIC    ((uint16_t)0xef10)
 #define CONF_VERS     ((uint8_t)1)
 
@@ -106,7 +106,7 @@ struct config_s
 /* EEProm bytes : EEPROM_START+sizeof(configuration) */
 #define EEPROM_SCOPE    (sizeof(configuration) + EEPROM_START)
 
-  int
+int
 conf_write( void )
 {
   const byte* p = (const byte*)(const void*)&configuration;
@@ -114,17 +114,17 @@ conf_write( void )
   configuration.magic = CONF_MAGIC;
   configuration.vers  = CONF_VERS;
   for (i = 0; i < sizeof(configuration); i++, addr++, p++) {
-    if (*p!=EEPROM.read( EEPROM_START+addr )){
-      EEPROM.write( EEPROM_START+addr, *p );
+    if (*p != EEPROM.read( EEPROM_START + addr )) {
+      EEPROM.write( EEPROM_START + addr, *p );
       modified ++;
     }
   }
   EEPROM.commit();
-  c_print( "conf_write: wrote "+String(i)+" bytes" );
+  c_print( "conf_write: wrote " + String(i) + " bytes" );
   return i;
 }
 
-  int
+int
 conf_reset( void )
 {
   memset( &configuration, 0x0, sizeof(configuration) );
@@ -132,26 +132,24 @@ conf_reset( void )
     configuration.lc_rear_calfactor = 1.0;
 }
 
-  bool
+bool
 conf_is_defined( void )
 {
   return (configuration.magic == CONF_MAGIC  &&
           configuration.vers == CONF_VERS)
-    ? 1 : 0;
+         ? 1 : 0;
 }
 
-  bool
+bool
 conf_is_valid( void )
 {
   return (conf_is_defined()                     &&
-          configuration.supports_dist>1         &&
-          configuration.support_le_dist>1       &&
-          configuration.lc_front_calfactor>1.0  &&
-          configuration.lc_rear_calfactor>1.0)
-    ? 1 : 0;
+          configuration.supports_dist > 1         &&
+          configuration.support_le_dist > 1)
+         ? 1 : 0;
 }
 
-  void
+void
 setup_conf( void )
 {
   byte* p = (byte*)(void*)&configuration;
@@ -163,11 +161,11 @@ setup_conf( void )
     *p = EEPROM.read( EEPROM_START + addr );
 
   c_print( "conf_readed: " );
-  c_print( " version: "+String(configuration.vers) );
-  c_print( " supports_dist: "+String(configuration.supports_dist) );
-  c_print( " support_le_dist: "+String(configuration.support_le_dist) );
-  c_print( " lc_front_calfactor: "+String(configuration.lc_front_calfactor) );
-  c_print( " lc_rear_calfactor: "+String(configuration.lc_rear_calfactor) );
+  c_print( " version: " + String(configuration.vers) );
+  c_print( " supports_dist: " + String(configuration.supports_dist) );
+  c_print( " support_le_dist: " + String(configuration.support_le_dist) );
+  c_print( " lc_front_calfactor: " + String(configuration.lc_front_calfactor) );
+  c_print( " lc_rear_calfactor: " + String(configuration.lc_rear_calfactor) );
 
   if (! conf_is_defined()) {
     conf_reset();
@@ -175,8 +173,8 @@ setup_conf( void )
 }
 
 /*
- * Language
- */
+   Language
+*/
 #define LANG_NB         2
 
 const char *_msg[] = {
@@ -195,20 +193,20 @@ const char *_msg[] = {
 #define MSG_WEIGHT          6
   "Weight", "Poids",
 #define MSG_WEIGHT_REAR     7
-  "W>", "P>",
+  "B>", "P>",
 #define MSG_WEIGHT_FRONT    8
-  ">W", ">P",
+  ">F", ">P",
 #define MSG_WIFI            9
   "Wifi", "Wifi",
 #define MSG_CONFIG_REQUIRED 10
   "Configuration required", "Configuration necessaire",
 #define MSG_CONFIG_STEP1    11
   "1) You need to connect to:"
-    "\n SSID: " WIFI_SSID
-    "\n http://172.16.19.1/",
+  "\n SSID: " WIFI_SSID
+  "\n http://10.1.0.1/",
   "1) Connectez-vous au:"
-    "\n Wifi: " WIFI_SSID
-    "\n http://172.16.19.1/",
+  "\n Wifi: " WIFI_SSID
+  "\n http://10.1.0.1/",
 #define MSG_CONFIG_STEP2    12
   "2) setup the loading cells",
   "2) config les cellules",
@@ -216,20 +214,20 @@ const char *_msg[] = {
   "3) setup the support size",
   "3) configurer les\ndimensions du support"
 };
-  const char *
+const char *
 msgc( int i )
 {
-  return _msg[ i*LANG_NB + configuration.lang ];
+  return _msg[ i * LANG_NB + configuration.lang ];
 }
-  String
+String
 msg( int i )
 {
   return String(msgc(i));
 }
 
 /*
- * LoadCell
- */
+   LoadCell
+*/
 
 #define LC_NB		2
 HX711_ADC *lc_front = NULL;
@@ -244,7 +242,7 @@ struct lc_data_s
   String swf, swr, sw, scg;
 } lc_data;
 
-  void
+void
 setup_loadcell_calfactor( void )
 {
   if (lc_available) {
@@ -253,7 +251,7 @@ setup_loadcell_calfactor( void )
   }
 }
 
-  void
+void
 setup_loadcell_tare( )
 {
   int8_t	i, rdy = 0;
@@ -262,7 +260,7 @@ setup_loadcell_tare( )
 
   if (lc_front && lc_available) {
     lc_available = 0;
-    for (i=0; i<LC_NB; i++) {
+    for (i = 0; i < LC_NB; i++) {
       a_lc[ i ]->powerDown();
       delete(a_lc[i]);
     }
@@ -273,21 +271,21 @@ setup_loadcell_tare( )
   a_lc[0] = lc_front = new HX711_ADC( D_LC_FRONT_DOUT, D_LC_FRONT_SCK );
   a_lc[1] = lc_rear  = new HX711_ADC( D_LC_REAR_DOUT, D_LC_REAR_SCK );
 
-  for (i=0; i<LC_NB; i++)
+  for (i = 0; i < LC_NB; i++)
     a_lc[ i ]->begin( 128 );
 
   /* No startMultiple - incompatible with new objects */
   /* No start - using millis() to countdown the time without referential */
   uint32_t ms = millis() + LC_STABILISING_TIME;
   do {
-    for (i=0; i<LC_NB; i++) {
+    for (i = 0; i < LC_NB; i++) {
       a_lc[i]->update();
       a_lc[i]->getData();
       yield();
     }
   } while (millis() < ms);
 
-  for (i=0; i<LC_NB; i++)
+  for (i = 0; i < LC_NB; i++)
     a_lc[i]->tare();
 
   lc_available = 1;
@@ -297,7 +295,7 @@ setup_loadcell_tare( )
   delay( DELAY_STEPS );
 }
 
-  void
+void
 loadcell_gather( void )
 {
   float wf, wr, w, cg;
@@ -311,15 +309,17 @@ loadcell_gather( void )
   lc_front->update();
   lc_rear->update();
 
+//  wf    = -1.0 * lc_front->getData();
   wf    = lc_front->getData();
+//  wr    = -1.0 * lc_rear->getData();
   wr    = lc_rear->getData();
 #ifdef NO_NEGATIVE
-  if (wf<0.0)   wf = 0.0;
-  if (wr<0.0)   wr = 0.0;
+  if (wf < 0.0)   wf = 0.0;
+  if (wr < 0.0)   wr = 0.0;
 #endif
 #ifdef WEIGHT_MAX
-  if (wf>WEIGHT_MAX)  wf = WEIGHT_MAX;
-  if (wr>WEIGHT_MAX)  wr = WEIGHT_MAX;
+  if (wf > WEIGHT_MAX)  wf = WEIGHT_MAX;
+  if (wr > WEIGHT_MAX)  wr = WEIGHT_MAX;
 #endif
 
   w     = wf + wr;
@@ -328,12 +328,12 @@ loadcell_gather( void )
 #ifdef WEIGHT_MIN_CG
       && wf > WEIGHT_MIN_CG && wr > WEIGHT_MIN_CG
 #endif
-      ) {
+     ) {
     double supports_dist, supports_dist_err, compute;
     supports_dist = configuration.supports_dist;
     compute = (supports_dist * wr) / w;
     /* basic check to remove absurd situations:
-     * Over the supports_dist ... the plane should fall from the scale */
+       Over the supports_dist ... the plane should fall from the scale */
     if (compute > supports_dist + configuration.support_le_dist)
       cg = -1.0;
     else
@@ -354,14 +354,14 @@ loadcell_gather( void )
 }
 
 /*
- * Wifi
- */
+   Wifi
+*/
 WiFiServer server(80);
-IPAddress local_IP(172,16,9,1);
-IPAddress gateway(172,16,9,1);
-IPAddress subnet(255,255,255,0);
+IPAddress local_IP(10, 1, 0, 1);
+IPAddress gateway(10, 1, 0, 254);
+IPAddress subnet(255, 255, 255, 0);
 
-  void
+void
 setup_wifi( void )
 {
   c_print(msg(MSG_SETUP_WIFI));
@@ -374,13 +374,13 @@ setup_wifi( void )
 
 
 /*
- * UI
- */
-SSD1306  display(0x3c, 4, 15);
+   UI
+*/
+SSD1306  display(0x3c, 21, 22);
 OLEDDisplayUi ui     ( &display );
 
 /* Loading last checks */
-  void
+void
 setup_check( void )
 {
   c_print( msg(MSG_SETUP_CHECK) );
@@ -403,25 +403,25 @@ FrameCallback frames[] = {
 #ifdef WELCOME_PLANE
 FrameCallback   *frames_welcome = frames;
 const int       frames_welcome_nb = 1;
-FrameCallback   *frames_live = frames_welcome+frames_welcome_nb;
+FrameCallback   *frames_live = frames_welcome + frames_welcome_nb;
 #else
 FrameCallback   *frames_live = frames;
 #endif
 const int       frames_live_nb = 1;
-FrameCallback   *frames_conf = frames_live+frames_live_nb;
+FrameCallback   *frames_conf = frames_live + frames_live_nb;
 const int       frames_conf_nb = 3;
 OverlayCallback overlays[] = { ms_overlay };
 
-  void
+void
 ui_overlay( int overlay )
 {
   if (overlay)
-    ui.setOverlays( overlays, sizeof(overlays)/sizeof(OverlayCallback) );
+    ui.setOverlays( overlays, sizeof(overlays) / sizeof(OverlayCallback) );
   else
     ui.setOverlays( NULL, 0 );
 }
 
-  void
+void
 ui_to_conf( )
 {
   ui_overlay( 0 );
@@ -431,7 +431,7 @@ ui_to_conf( )
   ui.setFrames( frames_conf, frames_conf_nb );
   ui.enableAutoTransition();
 }
-  void
+void
 ui_to_live( void )
 {
   ui_overlay( 1 );
@@ -441,7 +441,7 @@ ui_to_live( void )
   ui.switchToFrame( 0 );
 }
 #ifdef WELCOME_PLANE
-  void
+void
 ui_to_welcome( void )
 {
   ui.disableAutoTransition();
@@ -450,7 +450,7 @@ ui_to_welcome( void )
 }
 #endif
 
-  void
+void
 refresh_ui( void )
 {
   if (conf_is_valid()) {
@@ -461,7 +461,7 @@ refresh_ui( void )
     ui_to_conf();
 }
 
-  void
+void
 setup_ui( void )
 {
   c_print( msg(MSG_SETUP_UI) );
@@ -484,12 +484,12 @@ LoadingStage loading[] = {
   { msgc(MSG_SETUP_UI),       setup_ui            }
 };
 
-  void
+void
 setup_ui_loading( void )
 {
   c_init();
 
-  pinMode(16,OUTPUT);
+  pinMode(16, OUTPUT);
   digitalWrite(16, LOW);  // set GPIO16 low to reset OLED
   delay(50);
   digitalWrite(16, HIGH); // while OLED is running, must set GPIO16 in high
@@ -505,21 +505,23 @@ setup_ui_loading( void )
 
   ui.init();
 
-  ui.runLoadingProcess( loading, sizeof(loading)/sizeof(LoadingStage) );
+  ui.runLoadingProcess( loading, sizeof(loading) / sizeof(LoadingStage) );
 }
 
-  String
+String
 two_digits( int x )
 {
-  return ((x<10) ? "0":"")+String(x);
+  return ((x < 10) ? "0" : "") + String(x);
 }
-  String
+String
 float_string( float f, int precision, int l )
 {
   String s = String( f, precision );
   String b;
   int missing = l - s.length();
-  while (missing-- >0) { b.concat(" "); }
+  while (missing-- > 0) {
+    b.concat(" ");
+  }
   b.concat(s);
   return b;
 }
@@ -527,19 +529,19 @@ float_string( float f, int precision, int l )
 #ifdef WELCOME_PLANE
 static uint16_t welcome_cnt = 0;
 #include "plane.h"
-  void
+void
 draw_frame_welcome( OLEDDisplay *display, OLEDDisplayUiState* state,
                     int16_t x, int16_t y)
 {
   if (++welcome_cnt == WELCOME_PLANE)
     refresh_ui();
   else
-    display->drawXbm(x+5, y, plane_width, plane_height, plane_bits);
+    display->drawXbm(x + 5, y, plane_width, plane_height, plane_bits);
   return;
 }
 #endif
 
-  void
+void
 draw_frame_scale( OLEDDisplay *display, OLEDDisplayUiState* state,
                   int16_t x, int16_t y)
 {
@@ -553,25 +555,25 @@ draw_frame_scale( OLEDDisplay *display, OLEDDisplayUiState* state,
 
   display->setFont(ArialMT_Plain_10);
   display->setTextAlignment(TEXT_ALIGN_LEFT);
-  display->drawString( 0 + x, 12 + y, msg(MSG_WEIGHT_REAR) + ": "+ swr );
+  display->drawString( 0 + x, 12 + y, msg(MSG_WEIGHT_REAR) + ": " + swr );
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  display->drawString( 128, 12 + y, msg(MSG_WEIGHT_FRONT)+ ": "+ swf );
+  display->drawString( 128, 12 + y, msg(MSG_WEIGHT_FRONT) + ": " + swf );
 
   display->setFont(ArialMT_Plain_16);
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->drawString( 5 + x, 24 + y, msg(MSG_LE_CG_SMALL) );
   display->drawString( 5 + x, 41 + y, msg(MSG_WEIGHT) );
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  display->drawString( 128-5, 24 + y, scg );
-  display->drawString( 128-5, 41 + y, sw );
+  display->drawString( 128 - 5, 24 + y, scg );
+  display->drawString( 128 - 5, 41 + y, sw );
 
-  c_print( msg(MSG_WEIGHT_REAR) +": "+swr+" / "+
-           msg(MSG_WEIGHT_FRONT)+": "+swf );
-  c_print( " "+msg(MSG_LE_CG)   +": "+scg );
-  c_print( " "+msg(MSG_WEIGHT)  +": "+sw  );
+  c_print( msg(MSG_WEIGHT_REAR) + ": " + swr + " / " +
+           msg(MSG_WEIGHT_FRONT) + ": " + swf );
+  c_print( " " + msg(MSG_LE_CG)   + ": " + scg );
+  c_print( " " + msg(MSG_WEIGHT)  + ": " + sw  );
 }
 
-  void
+void
 draw_frame_config( OLEDDisplay *display, OLEDDisplayUiState* state,
                    int16_t x, int16_t y, int16_t msgid )
 {
@@ -579,19 +581,19 @@ draw_frame_config( OLEDDisplay *display, OLEDDisplayUiState* state,
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->drawString( 0 + x, 5 + y, msg( msgid ) );
 }
-  void
+void
 draw_frame_config1( OLEDDisplay *display, OLEDDisplayUiState* state,
                     int16_t x, int16_t y )
 {
   draw_frame_config( display, state, x, y, MSG_CONFIG_STEP1 );
 }
-  void
+void
 draw_frame_config2( OLEDDisplay *display, OLEDDisplayUiState* state,
                     int16_t x, int16_t y )
 {
   draw_frame_config( display, state, x, y, MSG_CONFIG_STEP2 );
 }
-  void
+void
 draw_frame_config3( OLEDDisplay *display, OLEDDisplayUiState* state,
                     int16_t x, int16_t y )
 {
@@ -600,46 +602,48 @@ draw_frame_config3( OLEDDisplay *display, OLEDDisplayUiState* state,
 
 
 
-  void
+void
 ms_overlay( OLEDDisplay *display, OLEDDisplayUiState* state )
 {
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(ArialMT_Plain_10);
   display->drawString(
     128, 0,
-    msg(MSG_WIFI)+": "+local_IP.toString() + " @ " + String( WIFI_SSID ) );
+    msg(MSG_WIFI) + ": " + local_IP.toString() + " @ " + String( WIFI_SSID ) );
 }
 
-  int
+int
 uri_get( String r, String p, char *b )
 {
   int pos, end, end2;
-  pos = r.indexOf( "&"+p+"=" );
-  if (pos<0) {
-    pos = r.indexOf( "?"+p+"=" );
-    if (pos<0)
+  pos = r.indexOf( "&" + p + "=" );
+  if (pos < 0) {
+    pos = r.indexOf( "?" + p + "=" );
+    if (pos < 0)
       return 0;
   }
-  pos   += p.length()+2;
+  pos   += p.length() + 2;
   end   = r.indexOf("&", pos);
   end2  = r.indexOf(" ", pos);
-  if (end<0 || (end2>0 && end2<end))
+  if (end < 0 || (end2 > 0 && end2 < end))
     end = end2;
-  r = ((end<0) ?
-          r.substring(pos)
-          :
-          r.substring(pos, end));
-  c_print( "CGIP: "+p+" => "+r );
+  r = ((end < 0) ?
+       r.substring(pos)
+       :
+       r.substring(pos, end));
+  c_print( "CGIP: " + p + " => " + r );
   if (b)
     r.toCharArray( b, 128 );
   return r.length();
 }
 
-  void
+void
 processWifiClient( )
 {
   WiFiClient client = server.available();
-  if (! client) { return; }
+  if (! client) {
+    return;
+  }
   String req = "";
   String currentLine = "";                // make a String to hold incoming data from the client
   while (client.connected()) {            // loop while the client's connected
@@ -657,26 +661,31 @@ processWifiClient( )
           if (uri_get(req, "getconfig", NULL)) {
             isjson = 1;
             c_print( "GET_CONFIG" );
-            json = "{\"lang\":"+String(configuration.lang)+
-              ",\"supportsdist\":"+String(configuration.supports_dist)+
-              ",\"supportledist\":"+String(configuration.support_le_dist)+
-              ",\"lcfrontcal\":"+String(configuration.lc_front_calfactor)+
-              ",\"lcrearcal\":"+String(configuration.lc_rear_calfactor)+
-              "}";
+            json = "{\"lang\":" + String(configuration.lang) +
+                   ",\"supportsdist\":" + String(configuration.supports_dist) +
+                   ",\"supportledist\":" + String(configuration.support_le_dist) +
+                   ",\"lcfrontcal\":" + String(configuration.lc_front_calfactor) +
+                   ",\"lcrearcal\":" + String(configuration.lc_rear_calfactor) +
+                   "}";
           }
           else if (uri_get(req, "setconfig", NULL)) {
             int mod = 0;
             c_print( "SET_CONFIG" );
             if (uri_get(req, "lang", p)) {
-              configuration.lang = (uint8_t)String(p).toInt(); mod=1; }
+              configuration.lang = (uint8_t)String(p).toInt(); mod = 1;
+            }
             if (uri_get(req, "supportsdist", p)) {
-              configuration.supports_dist = String(p).toInt(); mod=1; }
+              configuration.supports_dist = String(p).toInt(); mod = 1;
+            }
             if (uri_get(req, "supportledist", p)) {
-              configuration.support_le_dist = String(p).toInt(); mod=1; }
+              configuration.support_le_dist = String(p).toInt(); mod = 1;
+            }
             if (uri_get(req, "lcfrontcal", p)) {
-              configuration.lc_front_calfactor = String(p).toFloat(); mod=2; }
+              configuration.lc_front_calfactor = String(p).toFloat(); mod = 2;
+            }
             if (uri_get(req, "lcrearcal", p)) {
-              configuration.lc_rear_calfactor = String(p).toFloat(); mod=2; }
+              configuration.lc_rear_calfactor = String(p).toFloat(); mod = 2;
+            }
             if (uri_get(req, "save", NULL)) {
               mod += conf_write();
             }
@@ -684,7 +693,7 @@ processWifiClient( )
               mod += conf_reset();
             }
             isjson = 1;
-            json = "{\"err\":false,\"updated\":"+String(mod)+"}";
+            json = "{\"err\":false,\"updated\":" + String(mod) + "}";
             if (mod) {
               if (mod == 2) {
                 setup_loadcell_calfactor();
@@ -696,15 +705,15 @@ processWifiClient( )
             isjson = 1;
             if (uri_get(req, "config", NULL)) {
               loadcell_gather();
-              json = "{\"err\":false,\"cfg_weight_rear\":\""+lc_data.swr+
-                "\",\"cfg_weight_front\":\""+lc_data.swf+"\"}";
+              json = "{\"err\":false,\"cfg_weight_rear\":\"" + lc_data.swr +
+                     "\",\"cfg_weight_front\":\"" + lc_data.swf + "\"}";
             }
             else if (conf_is_valid()) {
               loadcell_gather();
-              json = "{\"err\":false,\"weight_rear\":\""+lc_data.swr+
-                "\",\"weight_front\":\""+lc_data.swf+
-                "\",\"weight\":\""+lc_data.sw+
-                "\",\"cg\":\""+lc_data.scg+"\"}";
+              json = "{\"err\":false,\"weight_rear\":\"" + lc_data.swr +
+                     "\",\"weight_front\":\"" + lc_data.swf +
+                     "\",\"weight\":\"" + lc_data.sw +
+                     "\",\"cg\":\"" + lc_data.scg + "\"}";
             }
             else {
               json = "{\"err\":true,\"desc\":\"config\"}";
@@ -718,11 +727,11 @@ processWifiClient( )
 
           client.println("HTTP/1.1 200 OK");
           client.println("Connection: Keep-Alive");
-          client.println("Content-Length: "+
-                         String(((isjson)?json.length():strlen(HTML))));
-          client.println("Content-type: "+
-                         ((isjson)?String("application/json")
-                          :String("text/html")));
+          client.println("Content-Length: " +
+                         String(((isjson) ? json.length() : strlen(HTML))));
+          client.println("Content-type: " +
+                         ((isjson) ? String("application/json")
+                          : String("text/html")));
           client.println();
           if (isjson) {
             client.print( json );
@@ -746,9 +755,9 @@ processWifiClient( )
 
 
 /*
- * Main setup
- */
-  void
+   Main setup
+*/
+void
 setup()
 {
   delay(DELAY_STEPS);
@@ -756,9 +765,9 @@ setup()
 }
 
 /*
- * Main loop
- */
-  void
+   Main loop
+*/
+void
 loop()
 {
   int remainingTimeBudget = ui.update();

@@ -3,7 +3,7 @@ const char HTML[] PROGMEM = R"=====(
 <!doctype html>
 <html>
   <head>
-    <title>CG balancer</title>
+    <title>CG Balancer</title>
 
     <style>
 /* W3PRO.CSS 4.12 November 2018 by Jan Egil and Borge Refsnes */
@@ -404,8 +404,8 @@ function incdec( k, st ) {
       if (is_float) { i = 0.00+parseFloat( i ); if (isNaN(i)) i = 0.0; }
       else { i = parseInt( i ); if (isNaN(i)) i = 0; }
       i += ((incpower>10)?2*(incpower-10):1)*st;
-      if (is_float) { if (i < 0.0) i = 0.00; i = i.toFixed(2); }
-      else { if (i<0) i = 0; }
+      if (is_float)
+        i = i.toFixed(2);
       e.value = i;
     };
     f();
